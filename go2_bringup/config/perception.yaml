@@ -1,0 +1,31 @@
+# Parameters for go2_perception/cluster_node. All distances in metres, in the LiDAR frame
+# (velodyne: x forward, y left, z up; the sensor sits on the Go2's back).
+cluster_node:
+  ros__parameters:
+    input_topic: /velodyne_points/points
+
+    # Region of interest around the sensor
+    roi_min: [-10.0, -10.0, -1.0]
+    roi_max: [10.0, 10.0, 1.5]
+
+    # The dog's own body and legs (removed so they don't become a cluster)
+    self_min: [-0.6, -0.35, -1.0]
+    self_max: [0.6, 0.35, 0.3]
+
+    voxel_leaf: 0.08
+
+    # RANSAC ground plane
+    ground_distance: 0.08
+    ground_max_angle_deg: 15.0
+    ground_max_iterations: 100
+    ground_min_inliers: 50
+
+    # Euclidean clustering. VLP-16 rings are ~2 deg apart, so at 5 m neighbouring
+    # rings are ~0.17 m apart; the tolerance must be larger than that.
+    cluster_tolerance: 0.35
+    min_cluster_size: 8
+    max_cluster_size: 5000
+
+    # Sanity filters on the resulting boxes
+    min_cluster_height: 0.10
+    max_cluster_extent: 4.0
