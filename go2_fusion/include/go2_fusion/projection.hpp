@@ -63,6 +63,10 @@ std::optional<ImageBox> projectBox(
 // Intersection over union of two image boxes, in [0, 1].
 double iou(const ImageBox & a, const ImageBox & b);
 
+// Fraction of `inner` that lies inside `outer`, in [0, 1]. Used to spot detection
+// fragments, e.g. an object split in two by something standing in front of it.
+double containment(const ImageBox & inner, const ImageBox & outer);
+
 struct Match
 {
   std::size_t cluster;

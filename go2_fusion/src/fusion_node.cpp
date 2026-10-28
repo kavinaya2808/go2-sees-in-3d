@@ -102,6 +102,7 @@ public:
     max_detection_age_ = declare_parameter("max_detection_age", 1.0);
     lidar_confidence_ = declare_parameter("lidar_confidence", 0.6);
     min_depth_ = declare_parameter("min_depth", 0.3);
+    fragment_containment_ = declare_parameter("fragment_containment", 0.6);
     alert_classes_ = declare_parameter("alert_classes", std::vector<std::string>{"person"});
     alert_radius_ = declare_parameter("alert_radius", 5.0);
 
@@ -234,8 +235,11 @@ private:
       if (detection_matched[j]) {
         continue;
       }
-      // Seen by the camera only: we know the direction, but not the distance.
       const auto [cls, score] = classOf(*dets[j]);
+      if (isFragment(det_boxes[j], cls, objects)) {
+        continue;  // piece of an object we already have (e.g. split by an occluder)
+      }
+      // Seen by the camera only: we know the direction, but not the distance.
       FusedObject o;
       o.class_id = cls;
       o.sensors = Sensors::kCamera;
@@ -265,6 +269,21 @@ private:
     RCLCPP_INFO_THROTTLE(get_logger(), steady_clock_, 5000,
       "%zu clusters + %zu detections -> %zu both, %zu lidar-only, %zu camera-only",
       clusters.detections.size(), dets.size(), n_both, n_lidar, n_camera);
+  }
+
+  // True if this unmatched detection lies mostly inside a cluster that both sensors
+  // already labelled with the same class.
+  bool isFragment(
+    const ImageBox & det, const std::string & cls, const std::vector<FusedObject> & objects) const
+  {
+    for (const auto & o : objects) {
+      if (o.sensors == Sensors::kBoth && o.class_id == cls && o.image_box &&
+        containment(det, *o.image_box) >= fragment_containment_)
+      {
+        return true;
+      }
+    }
+    return false;
   }
 
   static std::pair<std::string, double> classOf(const vision_msgs::msg::Detection2D & d)
@@ -449,6 +468,7 @@ private:
   double max_detection_age_{1.0};
   double lidar_confidence_{0.6};
   double min_depth_{0.3};
+  double fragment_containment_{0.6};
   std::vector<std::string> alert_classes_;
   double alert_radius_{5.0};
 

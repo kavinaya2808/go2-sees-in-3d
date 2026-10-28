@@ -41,6 +41,7 @@ detector_node:
     yolo_model: yolo11n.pt            # downloaded automatically on first run
     yolo_conf: 0.4
     yolo_device: cpu
+    yolo_classes: ["person"]          # COCO classes to keep, e.g. ["person", "car"]
 
 # LiDAR-camera fusion (go2_fusion/fusion_node)
 fusion_node:
@@ -53,6 +54,7 @@ fusion_node:
     min_iou: 0.15                     # projected cluster box vs detection box
     max_detection_age: 1.0            # seconds between LiDAR scan and camera frame
     min_depth: 0.3                    # ignore box corners closer than this to the camera
+    fragment_containment: 0.6         # unmatched detection this much inside a same-class object = fragment
     lidar_confidence: 0.6             # confidence for a LiDAR-only object
     alert_classes: ["person"]
     alert_radius: 5.0                 # metres

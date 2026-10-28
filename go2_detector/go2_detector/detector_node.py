@@ -76,15 +76,22 @@ class ColorDetector:
 class YoloDetector:
     name = 'yolo'
 
-    def __init__(self, model: str, conf: float, device: str):
+    def __init__(self, model: str, conf: float, device: str, classes: list):
         from ultralytics import YOLO  # imported here so the colour backend works without it
 
         self.model = YOLO(model)
         self.conf = conf
         self.device = device
+        # Keep only the classes of interest (by name); empty list = all COCO classes.
+        name_to_id = {name: i for i, name in self.model.names.items()}
+        unknown = [c for c in classes if c not in name_to_id]
+        if unknown:
+            raise ValueError(f'unknown YOLO classes {unknown}')
+        self.class_ids = [name_to_id[c] for c in classes] or None
 
     def detect(self, bgr):
-        result = self.model.predict(bgr, conf=self.conf, device=self.device, verbose=False)[0]
+        result = self.model.predict(
+            bgr, conf=self.conf, device=self.device, classes=self.class_ids, verbose=False)[0]
         out = []
         for box in result.boxes:
             x1, y1, x2, y2 = (float(v) for v in box.xyxy[0].tolist())
@@ -105,6 +112,7 @@ class DetectorNode(Node):
         yolo_model = self.declare_parameter('yolo_model', 'yolo11n.pt').value
         yolo_conf = float(self.declare_parameter('yolo_conf', 0.4).value)
         yolo_device = self.declare_parameter('yolo_device', 'cpu').value
+        yolo_classes = list(self.declare_parameter('yolo_classes', ['person']).value)
 
         self.detectors = []
         for backend in backends:
@@ -112,7 +120,7 @@ class DetectorNode(Node):
                 self.detectors.append(ColorDetector(min_area))
             elif backend == 'yolo':
                 try:
-                    self.detectors.append(YoloDetector(yolo_model, yolo_conf, yolo_device))
+                    self.detectors.append(YoloDetector(yolo_model, yolo_conf, yolo_device, yolo_classes))
                 except Exception as e:  # missing package, failed download, ...
                     self.get_logger().warn(f'YOLO disabled ({e}); continuing without it')
             else:

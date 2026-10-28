@@ -116,6 +116,16 @@ TEST(Iou, KnownValues)
   EXPECT_NEAR(go2_fusion::iou(a, ImageBox{5, 0, 15, 10}), 1.0 / 3.0, 1e-12);
 }
 
+TEST(Iou, ContainmentMeasuresHowMuchOfABoxIsInsideAnother)
+{
+  const ImageBox outer{0, 0, 100, 100};
+  EXPECT_DOUBLE_EQ(go2_fusion::containment(ImageBox{10, 10, 30, 30}, outer), 1.0);
+  EXPECT_DOUBLE_EQ(go2_fusion::containment(ImageBox{90, 0, 110, 100}, outer), 0.5);
+  EXPECT_DOUBLE_EQ(go2_fusion::containment(ImageBox{200, 200, 210, 210}, outer), 0.0);
+  // Not symmetric: the big box is only partly inside the small one
+  EXPECT_LT(go2_fusion::containment(outer, ImageBox{10, 10, 30, 30}), 0.1);
+}
+
 TEST(Matching, PicksBestOverlapOneToOne)
 {
   std::vector<std::optional<ImageBox>> clusters{

@@ -73,6 +73,14 @@ double iou(const ImageBox & a, const ImageBox & b)
   return union_area > 0.0 ? inter_area / union_area : 0.0;
 }
 
+double containment(const ImageBox & inner, const ImageBox & outer)
+{
+  const ImageBox inter{
+    std::max(inner.x_min, outer.x_min), std::max(inner.y_min, outer.y_min),
+    std::min(inner.x_max, outer.x_max), std::min(inner.y_max, outer.y_max)};
+  return inner.area() > 0.0 ? inter.area() / inner.area() : 0.0;
+}
+
 std::vector<Match> greedyMatch(
   const std::vector<std::optional<ImageBox>> & clusters,
   const std::vector<ImageBox> & detections, double min_iou)
