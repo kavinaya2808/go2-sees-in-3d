@@ -12,6 +12,8 @@
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>go2_perception</exec_depend>
+  <exec_depend>go2_detector</exec_depend>
+  <exec_depend>go2_fusion</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

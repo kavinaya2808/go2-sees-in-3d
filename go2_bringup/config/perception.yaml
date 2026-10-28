@@ -29,3 +29,30 @@ cluster_node:
     # Sanity filters on the resulting boxes
     min_cluster_height: 0.10
     max_cluster_extent: 4.0
+
+# 2D detector on the D455 colour image (go2_detector/detector_node)
+detector_node:
+  ros__parameters:
+    image_topic: /d455/image          # check with: ros2 topic list | grep d455
+    output_topic: /perception/detections_2d
+    backends: ["color", "yolo"]       # drop "yolo" to run colour-only
+    max_rate_hz: 5.0
+    min_area: 150                     # colour blobs smaller than this (px) are ignored
+    yolo_model: yolo11n.pt            # downloaded automatically on first run
+    yolo_conf: 0.4
+    yolo_device: cpu
+
+# LiDAR-camera fusion (go2_fusion/fusion_node)
+fusion_node:
+  ros__parameters:
+    clusters_topic: /perception/clusters
+    detections_topic: /perception/detections_2d
+    camera_info_topic: /d455/camera_info
+    image_topic: /d455/image          # only used for the debug image
+    camera_frame: d455_camera_color_optical_frame   # optical frame: z forward, x right, y down
+    min_iou: 0.15                     # projected cluster box vs detection box
+    max_detection_age: 1.0            # seconds between LiDAR scan and camera frame
+    min_depth: 0.3                    # ignore box corners closer than this to the camera
+    lidar_confidence: 0.6             # confidence for a LiDAR-only object
+    alert_classes: ["person"]
+    alert_radius: 5.0                 # metres
